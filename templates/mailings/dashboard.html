@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Дашборд - Система рассылок{% endblock %}
+{% block page_title %}Дашборд{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Статистика -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Всего рассылок
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_mailings }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-envelope-paper fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Активные рассылки
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_mailings }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-play-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Всего клиентов
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_clients }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Всего сообщений
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_messages }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-chat-dots fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Последние рассылки -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Последние рассылки</h6>
+                <a href="{% url 'mailing_list' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_mailings %}
+                <div class="list-group list-group-flush">
+                    {% for mailing in recent_mailings %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ mailing.title }}</h6>
+                            <small class="text-muted">{{ mailing.get_status_display }} • {{ mailing.get_frequency_display }}</small>
+                        </div>
+                        <a href="{% url 'mailing_detail' mailing.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">Нет рассылок</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Последние сообщения -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Последние сообщения</h6>
+                <a href="{% url 'message_list' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_messages %}
+                <div class="list-group list-group-flush">
+                    {% for message in recent_messages %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ message.client.full_name }}</h6>
+                            <small class="text-muted">
+                                {{ message.get_status_display }} • {{ message.mailing.title }}
+                            </small>
+                        </div>
+                        <span class="badge {% if message.status == 'sent' %}bg-success{% elif message.status == 'failed' %}bg-danger{% else %}bg-warning{% endif %} rounded-pill">
+                            {{ message.get_status_display }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">Нет сообщений</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Быстрые действия -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Быстрые действия</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'mailing_create' %}" class="btn btn-primary w-100">
+                            <i class="bi bi-plus-circle"></i> Создать рассылку
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'client_create' %}" class="btn btn-success w-100">
+                            <i class="bi bi-person-plus"></i> Добавить клиента
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'mailing_list' %}" class="btn btn-info w-100">
+                            <i class="bi bi-list-ul"></i> Все рассылки
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'client_list' %}" class="btn btn-warning w-100">
+                            <i class="bi bi-people"></i> Все клиенты
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

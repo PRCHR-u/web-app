@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Рассылки - Система рассылок{% endblock %}
+{% block page_title %}Рассылки{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Список рассылок</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'mailing_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Создать рассылку
+        </a>
+    </div>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">Фильтры</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                {{ filter_form.status.label_tag }}
+                {{ filter_form.status }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.frequency.label_tag }}
+                {{ filter_form.frequency }}
+            </div>
+            <div class="col-md-4">
+                {{ filter_form.search.label_tag }}
+                {{ filter_form.search }}
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Поиск
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Список рассылок -->
+{% if page_obj %}
+<div class="row">
+    {% for mailing in page_obj %}
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">{{ mailing.title }}</h6>
+                <span class="badge {% if mailing.status == 'active' %}bg-success{% elif mailing.status == 'paused' %}bg-warning{% elif mailing.status == 'completed' %}bg-secondary{% else %}bg-light{% endif %}">
+                    {{ mailing.get_status_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                <p class="card-text"><strong>Тема:</strong> {{ mailing.subject }}</p>
+                <p class="card-text"><strong>Частота:</strong> {{ mailing.get_frequency_display }}</p>
+                <p class="card-text"><strong>Клиентов:</strong> {{ mailing.clients.count }}</p>
+                <p class="card-text">
+                    <strong>Период:</strong><br>
+                    <small class="text-muted">
+                        С {{ mailing.start_time|date:"d.m.Y H:i" }}<br>
+                        До {{ mailing.end_time|date:"d.m.Y H:i" }}
+                    </small>
+                </p>
+                <p class="card-text">
+                    <small class="text-muted">Создана: {{ mailing.created_at|date:"d.m.Y H:i" }}</small>
+                </p>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100" role="group">
+                    <a href="{% url 'mailing_detail' mailing.pk %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-eye"></i> Просмотр
+                    </a>
+                    <a href="{% url 'mailing_edit' mailing.pk %}" class="btn btn-outline-warning btn-sm">
+                        <i class="bi bi-pencil"></i> Редактировать
+                    </a>
+                    <a href="{% url 'mailing_delete' mailing.pk %}" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-trash"></i> Удалить
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Пагинация -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Навигация по страницам">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.frequency %}&frequency={{ request.GET.frequency }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                <i class="bi bi-chevron-double-left"></i>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.frequency %}&frequency={{ request.GET.frequency }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+        </li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.frequency %}&frequency={{ request.GET.frequency }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+        </li>
+        {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.frequency %}&frequency={{ request.GET.frequency }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.frequency %}&frequency={{ request.GET.frequency }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                <i class="bi bi-chevron-double-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-envelope-paper display-1 text-muted"></i>
+    <h3 class="mt-3">Нет рассылок</h3>
+    <p class="text-muted">Создайте первую рассылку для начала работы</p>
+    <a href="{% url 'mailing_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Создать рассылку
+    </a>
+</div>
+{% endif %}
+{% endblock %} 

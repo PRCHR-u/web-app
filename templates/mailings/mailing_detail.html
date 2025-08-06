@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ mailing.title }} - Система рассылок{% endblock %}
+{% block page_title %}{{ mailing.title }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>{{ mailing.title }}</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+            <a href="{% url 'mailing_edit' mailing.pk %}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Редактировать
+            </a>
+            <a href="{% url 'mailing_delete' mailing.pk %}" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Удалить
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Информация о рассылке -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Информация о рассылке</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Тема:</strong> {{ mailing.subject }}</p>
+                        <p><strong>Статус:</strong> 
+                            <span class="badge {% if mailing.status == 'active' %}bg-success{% elif mailing.status == 'paused' %}bg-warning{% elif mailing.status == 'completed' %}bg-secondary{% else %}bg-light{% endif %}">
+                                {{ mailing.get_status_display }}
+                            </span>
+                        </p>
+                        <p><strong>Частота:</strong> {{ mailing.get_frequency_display }}</p>
+                        <p><strong>Создатель:</strong> {{ mailing.created_by.username }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Время начала:</strong> {{ mailing.start_time|date:"d.m.Y H:i" }}</p>
+                        <p><strong>Время окончания:</strong> {{ mailing.end_time|date:"d.m.Y H:i" }}</p>
+                        <p><strong>Создана:</strong> {{ mailing.created_at|date:"d.m.Y H:i" }}</p>
+                        <p><strong>Обновлена:</strong> {{ mailing.updated_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Текст сообщения:</h6>
+                    <div class="border rounded p-3 bg-light">
+                        {{ mailing.message|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Статистика -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">Статистика</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="h4 text-primary">{{ total_messages }}</div>
+                        <small class="text-muted">Всего сообщений</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="h4 text-success">{{ sent_messages }}</div>
+                        <small class="text-muted">Отправлено</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="h4 text-warning">{{ pending_messages }}</div>
+                        <small class="text-muted">Ожидает</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="h4 text-danger">{{ failed_messages }}</div>
+                        <small class="text-muted">Ошибки</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Действия -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Действия</h6>
+            </div>
+            <div class="card-body">
+                {% if mailing.status == 'active' %}
+                <form method="post" action="{% url 'mailing_send_now' mailing.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100 mb-2">
+                        <i class="bi bi-send"></i> Отправить сейчас
+                    </button>
+                </form>
+                {% endif %}
+                
+                <a href="{% url 'mailing_edit' mailing.pk %}" class="btn btn-warning w-100 mb-2">
+                    <i class="bi bi-pencil"></i> Редактировать
+                </a>
+                
+                <a href="{% url 'mailing_list' %}" class="btn btn-secondary w-100">
+                    <i class="bi bi-arrow-left"></i> Назад к списку
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список сообщений -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0">Сообщения рассылки</h6>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Клиент</th>
+                        <th>Email</th>
+                        <th>Статус</th>
+                        <th>Время отправки</th>
+                        <th>Ошибка</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for message in page_obj %}
+                    <tr>
+                        <td>
+                            <strong>{{ message.client.full_name }}</strong>
+                        </td>
+                        <td>
+                            <a href="mailto:{{ message.client.email }}">{{ message.client.email }}</a>
+                        </td>
+                        <td>
+                            <span class="badge {% if message.status == 'sent' %}bg-success{% elif message.status == 'failed' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ message.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if message.sent_at %}
+                            <small>{{ message.sent_at|date:"d.m.Y H:i" }}</small>
+                            {% else %}
+                            <small class="text-muted">-</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if message.error_message %}
+                            <span class="text-danger" title="{{ message.error_message }}">
+                                {{ message.error_message|truncatechars:50 }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Пагинация -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Навигация по страницам">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-4">
+            <i class="bi bi-chat-dots display-4 text-muted"></i>
+            <h5 class="mt-3">Нет сообщений</h5>
+            <p class="text-muted">Сообщения появятся после отправки рассылки</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

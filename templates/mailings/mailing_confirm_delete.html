@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление рассылки - Система рассылок{% endblock %}
+{% block page_title %}Удаление рассылки{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0">Подтверждение удаления</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6>Внимание!</h6>
+                    <p>Вы собираетесь удалить рассылку <strong>{{ mailing.title }}</strong>.</p>
+                    <p>Это действие нельзя отменить. Все данные рассылки и связанные сообщения будут удалены безвозвратно.</p>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Название:</strong> {{ mailing.title }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Тема:</strong> {{ mailing.subject }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Статус:</strong> 
+                        <span class="badge {% if mailing.status == 'active' %}bg-success{% elif mailing.status == 'paused' %}bg-warning{% elif mailing.status == 'completed' %}bg-secondary{% else %}bg-light{% endif %}">
+                            {{ mailing.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Частота:</strong> {{ mailing.get_frequency_display }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Клиентов:</strong> {{ mailing.clients.count }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Создана:</strong> {{ mailing.created_at|date:"d.m.Y" }}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Период:</strong>
+                    <p class="text-muted">
+                        С {{ mailing.start_time|date:"d.m.Y H:i" }}<br>
+                        До {{ mailing.end_time|date:"d.m.Y H:i" }}
+                    </p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'mailing_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Удалить рассылку
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
