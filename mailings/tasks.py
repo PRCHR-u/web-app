@@ -48,13 +48,13 @@ def send_mailing_task(mailing_id):
         failed_count = 0
         
         for message in messages_to_send:
+            log_status = 'failed'
+            log_message = ''
             try:
                 # Отправляем email
-                send_mail(
-                    subject=mailing.subject,
-                    message=mailing.message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[message.client.email],
+                server_response = send_mail(
+                    subject=mailing.message_template.subject,
+                    message=mailing.message_template.body,
                     fail_silently=False,
                 )
                 
@@ -66,13 +66,10 @@ def send_mailing_task(mailing_id):
                 sent_count += 1
                 
                 # Логируем успешную отправку
-                MailingLog.objects.create(
-                    mailing=mailing,
-                    message=f"Сообщение отправлено клиенту {message.client.email}",
-                    level='INFO'
-                )
+                log_status = 'success'
+                log_message = f"Сообщение отправлено клиенту {message.client.email}"
                 
-            except Exception as e:
+            except Exception as e: # Catching a broad exception for demonstration; refine as needed
                 # Обновляем статус сообщения на ошибку
                 message.status = 'failed'
                 message.error_message = str(e)
@@ -81,20 +78,21 @@ def send_mailing_task(mailing_id):
                 failed_count += 1
                 
                 # Логируем ошибку
-                MailingLog.objects.create(
-                    mailing=mailing,
-                    message=f"Ошибка отправки клиенту {message.client.email}: {str(e)}",
-                    level='ERROR'
-                )
+                log_status = 'failed'
+                log_message = f"Ошибка отправки клиенту {message.client.email}: {str(e)}"
+                server_response = str(e) # Store the exception as the server response
                 
                 logger.error(f"Ошибка отправки сообщения {message.id}: {str(e)}")
+
+            MailingLog.objects.create(
+                mailing=mailing,
+                message=log_message,
+                status=log_status,
+                server_response=server_response if 'server_response' in locals() else '', # Ensure server_response is defined
+            )
         
         # Логируем итоги рассылки
-        MailingLog.objects.create(
-            mailing=mailing,
-            message=f"Рассылка завершена. Отправлено: {sent_count}, Ошибок: {failed_count}",
-            level='INFO'
-        )
+
         
         logger.info(f"Рассылка {mailing_id} завершена. Отправлено: {sent_count}, Ошибок: {failed_count}")
         
@@ -109,7 +107,8 @@ def send_mailing_task(mailing_id):
             MailingLog.objects.create(
                 mailing=mailing,
                 message=f"Общая ошибка рассылки: {str(e)}",
-                level='ERROR'
+                status='failed',
+                server_response=str(e),
             )
         except:
             pass

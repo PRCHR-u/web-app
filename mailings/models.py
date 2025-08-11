@@ -47,8 +47,6 @@ class Mailing(models.Model):
     ]
 
     title = models.CharField(max_length=200, verbose_name='Название рассылки')
-    subject = models.CharField(max_length=200, verbose_name='Тема письма')
-    message = models.TextField(verbose_name='Текст сообщения')
     clients = models.ManyToManyField(Client, verbose_name='Клиенты')
     
     start_time = models.DateTimeField(verbose_name='Время начала')
@@ -71,6 +69,11 @@ class Mailing(models.Model):
         User, 
         on_delete=models.CASCADE, 
         verbose_name='Создатель'
+    )
+    message_template = models.ForeignKey(
+        'MessageTemplate',
+        on_delete=models.CASCADE,
+        verbose_name='Шаблон сообщения'
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
@@ -124,6 +127,11 @@ class Message(models.Model):
 
 class MailingLog(models.Model):
     """Модель логов рассылки"""
+    STATUS_CHOICES = [
+        ('success', 'Успешно'),
+        ('failed', 'Не успешно'),
+    ]
+
     mailing = models.ForeignKey(
         Mailing, 
         on_delete=models.CASCADE, 
@@ -133,6 +141,12 @@ class MailingLog(models.Model):
     message = models.TextField(verbose_name='Сообщение')
     level = models.CharField(max_length=20, verbose_name='Уровень')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        verbose_name='Статус'
+    )
+    server_response = models.TextField(verbose_name='Ответ почтового сервера', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Лог рассылки'
@@ -141,3 +155,27 @@ class MailingLog(models.Model):
 
     def __str__(self):
         return f"{self.mailing.title} - {self.level} - {self.created_at}" 
+
+
+class MessageTemplate(models.Model):
+    """Модель шаблона сообщения"""
+    subject = models.CharField(max_length=200, verbose_name='Тема письма')
+    body = models.TextField(verbose_name='Тело письма')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    created_by = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        verbose_name='Создатель',
+        default=1 # You might want to set a more appropriate default or handle this during creation
+    )
+
+    class Meta:
+        verbose_name = 'Шаблон сообщения'
+        verbose_name_plural = 'Шаблоны сообщений'
+        ordering = ['subject']
+
+    def __str__(self):
+        return self.subject
+
+

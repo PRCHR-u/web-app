@@ -93,11 +93,9 @@
             <div class="card-body">
                 {% if mailing.status == 'active' %}
                 <form method="post" action="{% url 'mailing_send_now' mailing.pk %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-success w-100 mb-2">
-                        <i class="bi bi-send"></i> Отправить сейчас
-                    </button>
-                </form>
+ {% csrf_token %}
+ <button type="submit" class="btn btn-success w-100 mb-2"><i class="bi bi-send"></i> Отправить сейчас</button>
+ </form>
                 {% endif %}
                 
                 <a href="{% url 'mailing_edit' mailing.pk %}" class="btn btn-warning w-100 mb-2">

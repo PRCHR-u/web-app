@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Userfrom .models import Client, Mailing, MessageTemplate
 from .models import Client, Mailing
 
 
@@ -23,11 +23,10 @@ class MailingForm(forms.ModelForm):
     
     class Meta:
         model = Mailing
-        fields = ['title', 'subject', 'message', 'clients', 'start_time', 'end_time', 'frequency', 'status']
+        fields = ['title', 'message_template', 'clients', 'start_time', 'end_time', 'frequency', 'status']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'subject': forms.TextInput(attrs={'class': 'form-control'}),
-            'message': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+            'message_template': forms.Select(attrs={'class': 'form-control'}),
             'start_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'end_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'frequency': forms.Select(attrs={'class': 'form-control'}),
@@ -35,9 +34,11 @@ class MailingForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.fields['clients'].widget.attrs.update({'class': 'form-control'})
-        self.fields['clients'].queryset = Client.objects.all()
+        if user:
+            self.fields['message_template'].queryset = MessageTemplate.objects.filter(created_by=user)
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -74,3 +75,15 @@ class MailingFilterForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Поиск по названию...'})
     ) 
+
+
+class MessageTemplateForm(forms.ModelForm):
+    """Форма для создания и редактирования шаблонов сообщений"""
+
+    class Meta:
+        model = MessageTemplate
+        fields = ['subject', 'body']
+        widgets = {
+            'subject': forms.TextInput(attrs={'class': 'form-control'}),
+            'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+        }
