@@ -1,12 +1,17 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import Userfrom .models import Client, Mailing, MessageTemplate
-from .models import Client, Mailing
+from django.contrib.auth import get_user_model  # Corrected import
+
+User = get_user_model() # Get the active user model
+
+from .models import Client, Mailing, Message
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit, Layout, Field
 
 
 class ClientForm(forms.ModelForm):
     """Форма для создания и редактирования клиентов"""
-    
+
     class Meta:
         model = Client
         fields = ['email', 'full_name', 'phone', 'comment']
@@ -19,14 +24,16 @@ class ClientForm(forms.ModelForm):
 
 
 class MailingForm(forms.ModelForm):
+
+    message = forms.ModelChoiceField(queryset=Message.objects.none())
     """Форма для создания и редактирования рассылок"""
-    
+
     class Meta:
         model = Mailing
-        fields = ['title', 'message_template', 'clients', 'start_time', 'end_time', 'frequency', 'status']
+        fields = ['title', 'message', 'clients', 'start_time', 'end_time', 'frequency', 'status']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'message_template': forms.Select(attrs={'class': 'form-control'}),
+            'message': forms.Select(attrs={'class': 'form-control'}),
             'start_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'end_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'frequency': forms.Select(attrs={'class': 'form-control'}),
@@ -38,13 +45,13 @@ class MailingForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['clients'].widget.attrs.update({'class': 'form-control'})
         if user:
-            self.fields['message_template'].queryset = MessageTemplate.objects.filter(created_by=user)
+            self.fields['message'].queryset = Message.objects.filter(created_by=user)
 
 
 class UserRegistrationForm(UserCreationForm):
     """Форма регистрации пользователей"""
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
-    
+
     class Meta:
         model = User
         fields = ['username', 'email', 'password1', 'password2']
@@ -74,14 +81,14 @@ class MailingFilterForm(forms.Form):
         max_length=100,
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Поиск по названию...'})
-    ) 
+    )
 
 
-class MessageTemplateForm(forms.ModelForm):
+class MessageForm(forms.ModelForm):
     """Форма для создания и редактирования шаблонов сообщений"""
 
     class Meta:
-        model = MessageTemplate
+        model = Message
         fields = ['subject', 'body']
         widgets = {
             'subject': forms.TextInput(attrs={'class': 'form-control'}),

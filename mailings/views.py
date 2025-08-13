@@ -15,7 +15,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import cache_page 
 from .models import Client, Mailing, Message, MailingLog, User # Assuming User is imported or available
 from .forms import ClientForm, MailingForm, UserRegistrationForm, MailingFilterForm
 from .tasks import send_mailing_task
@@ -206,6 +206,26 @@ def mailing_list(request):
     return render(request, 'mailings/mailing_list.html', {
         'page_obj': page_obj,
         'filter_form': filter_form
+    })
+
+@login_required
+def message_create(request):
+    """Создание шаблона сообщения"""
+    if request.method == 'POST':
+        form = MessageForm(request.POST) # Assuming MessageForm exists for Message model (template)
+        if form.is_valid():
+            message_template = form.save(commit=False)
+            message_template.created_by = request.user # Assign the logged-in user as the creator
+            message_template.save()
+            messages.success(request, 'Шаблон сообщения успешно создан!')
+            # Redirect to the message list page (assuming 'message_list' is the name for template list)
+            return redirect(reverse_lazy('message_list'))
+    else:
+        form = MessageForm() # Assuming MessageForm exists for Message model (template)
+
+    return render(request, 'mailings/message_form.html', {
+        'form': form,
+        'title': 'Создать шаблон сообщения'
     })
 
 
