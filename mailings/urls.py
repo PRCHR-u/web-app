@@ -19,12 +19,12 @@ urlpatterns = [
     path('clients/<int:pk>/delete/', views.client_delete, name='client_delete'),
 
     # Рассылки
-    # path('mailings/', views.mailing_list, name='mailing_list'), # Commented out until view is implemented
-    # path('mailings/create/', views.mailing_create, name='mailing_create'), # Commented out until view is implemented
-    # path('mailings/<int:pk>/', views.mailing_detail, name='mailing_detail'), # Commented out until view is implemented
-    # path('mailings/<int:pk>/edit/', views.mailing_edit, name='mailing_edit'), # Commented out until view is implemented
-    # path('mailings/<int:pk>/delete/', views.mailing_delete, name='mailing_delete'), # Commented out until view is implemented
-    # path('mailings/<int:pk>/send/', views.mailing_send_now, name='mailing_send_now'), # Commented out until view is implemented
+    path('mailings/', views.mailing_list, name='mailing_list'),
+    path('mailings/create/', views.mailing_create, name='mailing_create'),
+    path('mailings/<int:pk>/', views.mailing_detail, name='mailing_detail'),
+    path('mailings/<int:pk>/edit/', views.mailing_edit, name='mailing_edit'),
+    path('mailings/<int:pk>/delete/', views.mailing_delete, name='mailing_delete'),
+    path('mailings/<int:pk>/send/', views.mailing_send_now, name='mailing_send_now'),
 
     # Шаблоны сообщений
     # path('message_templates/', views.message_template_list, name='message_template_list'), # Commented out until view is implemented
@@ -34,7 +34,7 @@ urlpatterns = [
     # path('message_templates/<int:pk>/delete/', views.message_template_delete, name='message_template_delete'), # Commented out until view is implemented
 
     # Сообщения
-    # path('messages/', views.message_list, name='message_list'), # Commented out until view is implemented
+    path('messages/', views.message_list, name='message_list'),
 
     # Логи
     # path('logs/', views.logs_list, name='logs_list'), # Commented out until view is implemented
