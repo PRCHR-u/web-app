@@ -24,14 +24,17 @@ urlpatterns = [
     path('mailings/<int:pk>/', views.mailing_detail, name='mailing_detail'),
     path('mailings/<int:pk>/edit/', views.mailing_edit, name='mailing_edit'),
     path('mailings/<int:pk>/delete/', views.mailing_delete, name='mailing_delete'),
+    path('mailings/<int:pk>/disable/', views.mailing_disable, name='mailing_disable'),
     path('mailings/<int:pk>/send/', views.mailing_send_now, name='mailing_send_now'),
+    path('reports/', views.user_mailing_reports, name='user_mailing_reports'),
+
 
     # Шаблоны сообщений
-    # path('message_templates/', views.message_template_list, name='message_template_list'), # Commented out until view is implemented
+    path('message_templates/', views.message_list, name='message_list'), # Assuming message_list is the template list
     path('message_templates/create/', views.message_create, name='message_create'), # Uncommented and updated view name
-    # path('message_templates/<int:pk>/', views.message_template_detail, name='message_template_detail'), # Commented out until view is implemented
-    # path('message_templates/<int:pk>/edit/', views.message_template_edit, name='message_template_edit'), # Commented out until view is implemented
-    # path('message_templates/<int:pk>/delete/', views.message_template_delete, name='message_template_delete'), # Commented out until view is implemented
+    path('message_templates/<int:pk>/', views.message_detail, name='message_detail'),
+    path('message_templates/<int:pk>/edit/', views.message_edit, name='message_edit'),
+    path('message_templates/<int:pk>/delete/', views.message_delete, name='message_delete'),
 
     # Сообщения
     path('messages/', views.message_list, name='message_list'),

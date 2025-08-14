@@ -85,8 +85,6 @@ def dashboard(request):
         'active_mailings': active_mailings,
         'created_mailings': created_mailings,
         'total_sent_messages': total_sent_messages,
- 'successful_attempts': successful_attempts,
-        'total_messages': total_messages,
         'recent_mailings': recent_mailings,
         'recent_messages': recent_messages,
     }
@@ -97,11 +95,10 @@ def dashboard(request):
 @login_required
 def client_list(request):
     """Список клиентов"""
-    if request.user.is_staff: # Managers can see all clients
+    if request.user.is_staff:  # Managers can see all clients
         clients = Client.objects.all().order_by('-created_at')
-    else: # Regular users only see their clients
-        clients = Client.objects.filter(mailing__created_by=request.user).distinct().order_by('-created_at')
- # Note: This assumes clients are linked to mailings. If clients exist independently, you might need a different approach for users to see their own.
+    else:  # Regular users only see their clients
+        clients = Client.objects.filter(owner=request.user).order_by('-created_at')
 
     # Поиск
     search = request.GET.get('search')
@@ -126,11 +123,16 @@ def client_list(request):
 @login_required
 def client_create(request):
     """Создание клиента"""
+    # Permission check: Managers cannot create clients
+    if request.user.is_staff:
+        messages.error(request, "Менеджеры не имеют прав для создания клиентов.")
+        return redirect('client_list') # Redirect managers away
     if request.method == 'POST':
         form = ClientForm(request.POST)
         if form.is_valid():
- # For now, assuming a client created here isn't directly linked to a user yet. This might need adjustment based on your client-user relationship design.
-            form.save()
+            client = form.save(commit=False)
+            client.owner = request.user # Assign the logged-in user as the owner
+            client.save()
             messages.success(request, 'Клиент успешно создан!')
             return redirect('client_list')
     else:
@@ -142,9 +144,14 @@ def client_create(request):
 @login_required
 def client_edit(request, pk):
     """Редактирование клиента"""
-    if not request.user.is_staff:
+    if request.user.is_staff:
+        client = get_object_or_404(Client, pk=pk)
+    else:
+        client = get_object_or_404(Client, pk=pk, owner=request.user)
+    # Permission check: Only staff can edit clients they don't own
+    if not request.user.is_staff and client.owner != request.user:
         messages.error(request, "У вас нет прав для редактирования этого клиента.")
-    client = get_object_or_404(Client, pk=pk)
+        return redirect('client_list') # Or another appropriate page
     
     if request.method == 'POST':
         form = ClientForm(request.POST, instance=client)
@@ -165,9 +172,15 @@ def client_edit(request, pk):
 @login_required
 def client_delete(request, pk):
     """Удаление клиента"""
-    if not request.user.is_staff:
+    # Retrieve the client based on user type
+    if request.user.is_staff:
+        client = get_object_or_404(Client, pk=pk)
+    else:
+        client = get_object_or_404(Client, pk=pk, owner=request.user)
+    # Permission check: Only staff can delete clients they don't own
+    if not request.user.is_staff and client.owner != request.user:
         messages.error(request, "У вас нет прав для удаления этого клиента.")
-    client = get_object_or_404(Client, pk=pk)
+        return redirect('client_list') # Or another appropriate page
     
     if request.method == 'POST':
         client.delete()
@@ -210,30 +223,21 @@ def mailing_list(request):
 
 @login_required
 def message_create(request):
-    """Создание шаблона сообщения"""
-    if request.method == 'POST':
-        form = MessageForm(request.POST) # Assuming MessageForm exists for Message model (template)
-        if form.is_valid():
-            message_template = form.save(commit=False)
-            message_template.created_by = request.user # Assign the logged-in user as the creator
-            message_template.save()
-            messages.success(request, 'Шаблон сообщения успешно создан!')
-            # Redirect to the message list page (assuming 'message_list' is the name for template list)
-            return redirect(reverse_lazy('message_list'))
-    else:
-        form = MessageForm() # Assuming MessageForm exists for Message model (template)
-
-    return render(request, 'mailings/message_form.html', {
-        'form': form,
-        'title': 'Создать шаблон сообщения'
-    })
-
-
-@login_required
-def mailing_create(request):
     """Создание рассылки"""
     if request.user.is_staff:
-        messages.error(request, "Менеджеры не могут создавать рассылки.")
+        mailing = get_object_or_404(Mailing, pk=pk)
+    else:
+        mailing = get_object_or_404(Mailing, pk=pk, created_by=request.user)
+# Permission check: Only the creator can delete, managers cannot delete others\' mailings
+    if not request.user.is_staff and mailing.created_by != request.user:
+        messages.error(request, "У вас нет прав для удаления этой рассылки.")
+        return redirect('mailing_list') # Or another appropriate page
+    
+    # Add a similar check for managers after retrieving the object
+    if request.user.is_staff and mailing.created_by != request.user:
+        messages.error(request, "Менеджеры не могут удалять рассылки, созданные другими пользователями.")
+        return redirect('mailing_list') # Or another appropriate page
+
     if request.method == 'POST':
         form = MailingForm(request.POST, user=request.user)
         if form.is_valid():
@@ -256,11 +260,11 @@ def mailing_create(request):
 @login_required
 def mailing_edit(request, pk):
     """Редактирование рассылки"""
-    if request.user.is_staff:
- # Managers can view but not edit/delete others' mailings
-        mailing = get_object_or_404(Mailing, pk=pk)
-    else:
-        mailing = get_object_or_404(Mailing, pk=pk, created_by=request.user)
+    mailing = get_object_or_404(Mailing, pk=pk)
+
+    # Permission check: Only the creator can edit, managers cannot edit others' mailings
+    if mailing.created_by != request.user and not request.user.is_staff:
+        messages.error(request, "У вас нет прав для редактирования этой рассылки.")
     
     if request.method == 'POST':
         form = MailingForm(request.POST, instance=mailing, user=request.user)
@@ -281,9 +285,12 @@ def mailing_edit(request, pk):
 @login_required
 def mailing_delete(request, pk):
     """Удаление рассылки"""
-    if not request.user.is_staff:
+    mailing = get_object_or_404(Mailing, pk=pk)
+
+    # Permission check: Only the creator can delete, managers cannot delete others' mailings
+    if mailing.created_by != request.user and not request.user.is_staff:
         messages.error(request, "У вас нет прав для удаления этой рассылки.")
-    mailing = get_object_or_404(Mailing, pk=pk, created_by=request.user) # Only creator can delete
+        return redirect('mailing_list') # Or another appropriate page
     
     if request.method == 'POST':
         mailing.delete()
@@ -296,10 +303,11 @@ def mailing_delete(request, pk):
 @login_required
 def mailing_detail(request, pk):
     """Детальная информация о рассылке"""
-    if request.user.is_staff:
-        mailing = get_object_or_404(Mailing, pk=pk)
-    else:
+    # Retrieve mailing based on user type
+    if not request.user.is_staff:
         mailing = get_object_or_404(Mailing, pk=pk, created_by=request.user)
+        messages.error(request, "У вас нет прав для просмотра этой рассылки.")
+        return redirect('mailing_list') # Redirect if not authorized
     messages_list = Message.objects.filter(mailing=mailing).select_related('client').order_by('-created_at')
     
     # Статистика
@@ -328,55 +336,187 @@ def mailing_detail(request, pk):
 @login_required
 @require_POST
 def send_mailing(request, pk):
-    """Триггер ручной отправки рассылки. (Доступно только создателю или менеджеру)"""
-    if not request.user.is_staff:
-        messages.error(request, "У вас нет прав для запуска рассылок вручную.")
-        return redirect('dashboard') # Redirect if not authorized
-    mailing = get_object_or_404(Mailing, pk=pk, created_by=request.user) # Only creator or manager can trigger? This needs clarification
-    send_mailing_task.delay(mailing.id)
-    messages.success(request, f'Рассылка "{mailing.title}" успешно запущена вручную!')
-    return redirect('mailing_detail', pk=mailing.id) # Redirect to the mailing detail page
+    """Триггер ручной отправки рассылки. (Доступно только создателю)"""
+    mailing = get_object_or_404(Mailing, pk=pk)
 
+    # Permission check: Only the creator can trigger manual send
+    if mailing.created_by != request.user:
+        messages.error(request, "У вас нет прав для запуска рассылок вручную.")
+        return redirect('mailing_detail', pk=pk) # Redirect back to detail page
+
+    if mailing.status == 'active':
+        send_mailing_task.delay(mailing.id)
+        messages.success(request, f'Рассылка "{mailing.title}" успешно запущена вручную!')
+    else:
+        messages.error(request, 'Рассылка должна быть активной для ручной отправки.')
+    return redirect('mailing_detail', pk=mailing.id)
+
+
+
+@login_required
+def mailing_disable(request, pk):
+    """Отключение рассылки (доступно только менеджерам)"""
+    # Permission check: Only managers can disable mailings
+    if not request.user.is_staff:
+        messages.error(request, "У вас нет прав для отключения рассылок.")
+        return redirect('dashboard')  # Redirect to dashboard or mailing list
+
+    mailing = get_object_or_404(Mailing, pk=pk)
+    # Change status to 'completed' or a dedicated 'disabled' status if it exists
+    mailing.status = 'completed'
+    mailing.save()
+    messages.success(request, f'Рассылка "{mailing.title}" успешно отключена.')
+    return redirect('mailing_list')  # Redirect to mailing list
 
 
 @login_required
 @require_POST
 def mailing_send_now(request, pk):
-    """Отправка рассылки немедленно (Доступно только создателю или менеджеру)"""
-    if not request.user.is_staff:
-        messages.error(request, "У вас нет прав для немедленной отправки рассылок.")
-        return redirect('dashboard') # Redirect if not authorized
-    else:
-        mailing = get_object_or_404(Mailing, pk=pk, created_by=request.user)
+    """Отправка рассылки немедленно (Этот функционал лучше реализовать через send_mailing)"""
+    messages.error(request, "Этот функционал устарел. Используйте кнопку 'Запустить вручную'.")
+    return redirect('mailing_detail', pk=pk)
 
-        if mailing.status == 'active':
+    if mailing.status == 'active':
             # Запускаем задачу отправки
             send_mailing_task.delay(mailing.id)
             messages.success(request, 'Рассылка запущена!')
-        else:
+    else:
             messages.error(request, 'Рассылка должна быть активной для отправки.')
-        return redirect('mailing_detail', pk=pk)
+    return redirect('mailing_detail', pk=pk)
 
 
 @login_required
 def message_list(request):
-    """Список всех сообщений пользователя"""
+    """Список шаблонов сообщений"""
     if request.user.is_staff:
-        messages_list = Message.objects.all().select_related('mailing', 'client').order_by('-created_at')
+        messages_list = Message.objects.all().order_by('-created_at')
     else:
-        messages_list = Message.objects.filter(mailing__created_by=request.user).select_related('mailing', 'client').order_by('-created_at')
+        messages_list = Message.objects.filter(created_by=request.user).order_by('-created_at')
 
-    # Фильтрация по статусу
-    status = request.GET.get('status')
-    if status:
-        messages_list = messages_list.filter(status=status)
-    
+    # Note: The original code here was filtering SentMessage (previously Message) by mailing__created_by.
+    # Assuming 'message_list' is now for the Message TEMPLATE model.
+    # If this view is intended for SentMessage, the filtering logic needs to be adjusted.
+    # For Message TEMPLATES, filtering by created_by is appropriate.
+ 
     # Пагинация
     paginator = Paginator(messages_list, 50)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+ 
     return render(request, 'mailings/message_list.html', {
+        'page_obj': page_obj,
+    })
+
+
+@login_required
+def message_create(request):
+    """Создание шаблона сообщения"""
+    # Managers can create message templates, regular users can too.
+    # The created_by field is set automatically.
+    if request.method == 'POST':
+        form = MessageForm(request.POST) # Assuming MessageForm exists for Message model (template)
+        if form.is_valid():
+            message_template = form.save(commit=False)
+            message_template.created_by = request.user # Assign the logged-in user as the creator
+            message_template.save()
+            messages.success(request, 'Шаблон сообщения успешно создан!')
+            return redirect(reverse_lazy('message_list')) # Redirect to the message list page
+    else:
+        form = MessageForm() # Assuming MessageForm exists for Message model (template)
+
+    return render(request, 'mailings/message_form.html', {
+        'form': form,
+        'title': 'Создать шаблон сообщения'
+    })
+
+
+@login_required
+def message_detail(request, pk):
+    """Детальная информация о шаблоне сообщения"""
+    # Retrieve message template based on user type
+    if request.user.is_staff:
+        message_template = get_object_or_404(Message, pk=pk)
+    else:
+        message_template = get_object_or_404(Message, pk=pk, created_by=request.user)
+    
+    return render(request, 'mailings/message_detail.html', {
+        'message_template': message_template,
+    })
+
+
+@login_required
+def message_edit(request, pk):
+    """Редактирование шаблона сообщения"""
+    # Retrieve template based on user type
+    if request.user.is_staff:
+        message_template = get_object_or_404(Message, pk=pk)
+    else:
+        message_template = get_object_or_404(Message, pk=pk, created_by=request.user)
+
+    # Permission check: Only the creator can edit, managers cannot edit others' templates
+    if message_template.created_by != request.user and not request.user.is_staff:
+        messages.error(request, "У вас нет прав для редактирования этого шаблона сообщения.")
+        return redirect(reverse_lazy('message_list')) # Or another appropriate page
+
+    if request.method == 'POST':
+        form = MessageForm(request.POST, instance=message_template) # Assuming MessageForm exists
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Шаблон сообщения успешно обновлен!')
+            return redirect(reverse_lazy('message_list')) # Redirect to list
+    else:
+        form = MessageForm(instance=message_template) # Assuming MessageForm exists
+
+    return render(request, 'mailings/message_form.html', {
+        'form': form,
+        'title': 'Редактировать шаблон сообщения',
+        'message_template': message_template,
+    })
+
+
+@login_required
+def message_delete(request, pk):
+    """Удаление шаблона сообщения"""
+    # Retrieve template based on user type
+    if request.user.is_staff:
+        message_template = get_object_or_404(Message, pk=pk)
+    else:
+        message_template = get_object_or_404(Message, pk=pk, created_by=request.user)
+
+    # Permission check: Only the creator can delete, managers cannot delete others' templates
+    if message_template.created_by != request.user and not request.user.is_staff:
+        messages.error(request, "У вас нет прав для удаления этого шаблона сообщения.")
+        return redirect(reverse_lazy('message_list')) # Or another appropriate page
+
+    if request.method == 'POST':
+        message_template.delete()
+        messages.success(request, 'Шаблон сообщения успешно удален!')
+        return redirect(reverse_lazy('message_list')) # Redirect to list
+
+    return render(request, 'mailings/message_confirm_delete.html', {
+        'message_template': message_template,
+    })
+
+
+@login_required
+def logs_list(request):
+    """Список логов рассылок"""
+    if request.user.is_staff:
+        logs = MailingLog.objects.all().select_related('mailing').order_by('-created_at')
+    else:
+        logs = MailingLog.objects.filter(mailing__created_by=request.user).select_related('mailing').order_by('-created_at')
+
+    # Фильтрация по уровню
+    level = request.GET.get('level')
+    if level:
+        logs = logs.filter(level=level)
+    
+    # Пагинация
+    paginator = Paginator(logs, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'mailings/logs_list.html', {
         'page_obj': page_obj,
         'status': status
     })
@@ -437,8 +577,29 @@ def user_toggle_block(request, pk):
     return redirect('user_list')
 
 
-# You'll need to create templates for user_list.html
+@login_required
+def user_mailing_reports(request):
+    """Страница отчетов по рассылкам пользователя"""
 
+    # Retrieve data for the current user's mailings
+    user_mailings = Mailing.objects.filter(created_by=request.user)
+    total_mailings = user_mailings.count()
+
+    # Get all sent messages related to the user's mailings
+    user_sent_messages = SentMessage.objects.filter(mailing__created_by=request.user)
+    total_sent_messages = user_sent_messages.count()
+    successful_messages = user_sent_messages.filter(status='sent').count()
+    failed_messages = user_sent_messages.filter(status='failed').count()
+
+    context = {
+        'total_mailings': total_mailings,
+        'total_sent_messages': total_sent_messages,
+        'successful_messages': successful_messages,
+        'failed_messages': failed_messages,
+        # Add more data as needed for reporting (e.g., trends, specific mailing stats)
+    }
+
+    return render(request, 'mailings/user_reports.html', context)
 
 
 def activate(request, uidb64, token):

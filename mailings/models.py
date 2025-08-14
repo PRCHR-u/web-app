@@ -28,6 +28,9 @@ class Client(models.Model):
         verbose_name = 'Клиент'
         verbose_name_plural = 'Клиенты'
         ordering = ['-created_at']
+        permissions = [
+            ("can_view_all_clients", "Can view all clients"),
+        ]
 
     def __str__(self):
         return f"{self.full_name} ({self.email})"""
