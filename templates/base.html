@@ -62,8 +62,8 @@
                     <div class="container-fluid">
                         <span class="navbar-brand">
                             <i class="bi bi-envelope"></i>
-                            {% block page_title %}Система рассылок{% endblock %}
                         </span>
+                        {% block page_title %}{% endblock %}
                         
                         <div class="navbar-nav ms-auto">
                             {% if user.is_authenticated %}
@@ -96,7 +96,7 @@
                     <div class="container-fluid">
                         <span class="navbar-brand">
                             <i class="bi bi-envelope"></i>
-                            {% block page_title %}Система рассылок{% endblock %}
+                            {% block page_title %}{% endblock %} {# Corrected: Keep only one page_title block #}
                         </span>
 
                         <div class="navbar-nav ms-auto">

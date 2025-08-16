@@ -222,7 +222,7 @@ def mailing_list(request):
     })
 
 @login_required
-def message_create(request):
+def mailing_create(request):
     """Создание рассылки"""
     if request.user.is_staff:
         mailing = get_object_or_404(Mailing, pk=pk)
