@@ -13,11 +13,18 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='customuser',
             name='avatar',
-            field=models.ImageField(blank=True, null=True, upload_to='avatars/', verbose_name='Аватар'),
+            field=models.ImageField(
+                blank=True,
+                null=True,
+                upload_to='avatars/',
+                verbose_name='Аватар',
+            ),
         ),
         migrations.AddField(
             model_name='customuser',
             name='country',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='Страна'),
+            field=models.CharField(
+                blank=True, max_length=100, null=True, verbose_name='Страна'
+            ),
         ),
     ]

@@ -392,11 +392,7 @@ def message_list(request):
         messages_list = Message.objects.all().order_by('-created_at')
     else:
         messages_list = Message.objects.filter(created_by=request.user).order_by('-created_at')
-
-    # Note: The original code here was filtering SentMessage (previously Message) by mailing__created_by.
-    # Assuming 'message_list' is now for the Message TEMPLATE model.
-    # If this view is intended for SentMessage, the filtering logic needs to be adjusted.
-    # For Message TEMPLATES, filtering by created_by is appropriate.
+ 
  
     # Пагинация
     paginator = Paginator(messages_list, 50)

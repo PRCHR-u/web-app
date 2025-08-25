@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
-from django.urls import reverse_lazy # Used for redirecting after successful registration
-
+from django.urls import reverse_lazy  # Used for redirecting after successful
+# registration
 from django.contrib.auth.decorators import login_required
-from users.forms import CustomUserForm # Import the custom user form
+
+from users.forms import CustomUserForm
+
+
 def register(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -16,21 +19,25 @@ def register(request):
         form = UserCreationForm()
     return render(request, 'users/register.html', {'form': form})
 
+
 @login_required
 def profile(request):
-    # The logged-in user is available as request.user
+    # The logged-in user is available as
+    # request.user
     user = request.user
     return render(request, 'users/profile.html', {'user': user})
 
-@login_required # Decorator to ensure user is logged in
+
+@login_required
 def edit_profile(request):
     if request.method == 'POST':
-        form = CustomUserForm(request.POST, request.FILES, instance=request.user)
+        form = CustomUserForm(request.POST, request.FILES,
+                              instance=request.user)
         if form.is_valid():
             form.save()
             # Redirect to the profile page after successful update
             return redirect(reverse_lazy('profile'))
     else:
-        form = CustomUserForm(instance=request.user) # Pre-populate form with current user data
+        form = CustomUserForm(
+            instance=request.user)
     return render(request, 'users/edit_profile.html', {'form': form})
-    
