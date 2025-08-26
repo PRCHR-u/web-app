@@ -1,9 +1,7 @@
-{% extends 'base.html' %}{% comment %} Assuming you have a base.html template {% endcomment %}
-
+{% extends 'base.htm' %}
 {% block title %}Register{% endblock %}
-
 {% block content %}
-  <h2>Register</h2>
+<h2>Register</h2>
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}{% comment %} Renders form fields as paragraphs {% endcomment %}

@@ -1,0 +1,9 @@
+ exclude =
+    .git,
+    __pycache__,
+    docs,
+    venv,
+    migrations,
+    *.pyc,
+    *.txt,
+    *.html

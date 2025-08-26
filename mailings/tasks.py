@@ -94,7 +94,8 @@ def send_mailing_task(mailing_id):
         # Логируем итоги рассылки
 
         
-        logger.info(f"Рассылка {mailing_id} завершена. Отправлено: {sent_count}, Ошибок: {failed_count}")
+        logger.info(f"Рассылка {mailing_id} завершена." 
+                    f"Отправлено: {sent_count}, Ошибок: {failed_count}")
         
     except Mailing.objects.DoesNotExist:
         logger.error(f"Рассылка {mailing_id} не найдена")
@@ -138,7 +139,7 @@ def should_send_mailing_now(mailing, now):
     if mailing.frequency == 'once':
         # Для однократных рассылок проверяем, была ли уже отправка
         return not Message.objects.filter(mailing=mailing, status='sent').exists()
-    
+
     elif mailing.frequency == 'daily':
         # Для ежедневных рассылок проверяем, была ли отправка сегодня
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
