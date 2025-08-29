@@ -15,14 +15,25 @@ class Client(models.Model):
         validators=[
             RegexValidator(
                 regex=r'^\+?1?\d{9,15}$',
-                message="Номер телефона должен быть в формате: '+999999999'. До 15 цифр."
+                message="Номер телефона должен быть в "
+                        "формате: '+999999999'. До 15 цифр."
             )
         ]
     )
     comment = models.TextField(blank=True, verbose_name='Комментарий')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='clients')
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+        )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления'
+        )
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='clients'
+        )
 
     class Meta:
         verbose_name = 'Клиент'
@@ -76,14 +87,24 @@ class Mailing(models.Model):
         verbose_name='Создатель',
         related_name='created_mailings'
     )
-    message = models.ForeignKey(  # Renamed field
-        'Message',  # Points to the renamed Message model (template)
+    message = models.ForeignKey(
+        'Message',
         on_delete=models.CASCADE,
-        verbose_name='Сообщение' # Updated verbose name
+        verbose_name='Сообщение'
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_mailings')
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+        )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления'
+        )
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='owned_mailings'
+        )
 
     class Meta:
         verbose_name = 'Рассылка'
@@ -94,7 +115,7 @@ class Mailing(models.Model):
         return self.title
 
 
-class SentMessage(models.Model): # Renamed from Message
+class SentMessage(models.Model):
     """Модель отправленного сообщения"""
     STATUS_CHOICES = [
         ('pending', 'Ожидает отправки'),
@@ -105,7 +126,7 @@ class SentMessage(models.Model): # Renamed from Message
     mailing = models.ForeignKey(
         Mailing,
         on_delete=models.CASCADE,
-        related_name='sent_messages', # Updated related_name
+        related_name='sent_messages',
         verbose_name='Рассылка'
     )
     client = models.ForeignKey(
@@ -119,9 +140,19 @@ class SentMessage(models.Model): # Renamed from Message
         default='pending',
         verbose_name='Статус'
     )
-    sent_at = models.DateTimeField(null=True, blank=True, verbose_name='Время отправки')
-    error_message = models.TextField(blank=True, verbose_name='Сообщение об ошибке')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Время отправки'
+        )
+    error_message = models.TextField(
+        blank=True,
+        verbose_name='Сообщение об ошибке'
+        )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+        )
 
     class Meta:
         verbose_name = 'Отправленное сообщение'
@@ -147,13 +178,20 @@ class MailingLog(models.Model):
     )
     message = models.TextField(verbose_name='Сообщение')
     level = models.CharField(max_length=20, verbose_name='Уровень')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+        )
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
         verbose_name='Статус'
     )
-    server_response = models.TextField(verbose_name='Ответ почтового сервера', blank=True, null=True)
+    server_response = models.TextField(
+        verbose_name='Ответ почтового сервера',
+        blank=True,
+        null=True
+        )
 
     class Meta:
         verbose_name = 'Лог рассылки'
@@ -164,12 +202,18 @@ class MailingLog(models.Model):
         return f"{self.mailing.title} - {self.level} - {self.created_at}"
 
 
-class Message(models.Model): # Renamed from MessageTemplate
+class Message(models.Model):
     """Модель сообщения (шаблон)"""
     subject = models.CharField(max_length=200, verbose_name='Тема письма')
     body = models.TextField(verbose_name='Тело письма')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+        )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления'
+        )
     created_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

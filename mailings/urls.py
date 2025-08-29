@@ -64,7 +64,11 @@ urlpatterns = [
      views.message_create,
      name='message_create'
      ),
-    path('message_templates/<int:pk>/', views.message_detail, name='message_detail'),
+    path(
+     'message_templates/<int:pk>/',
+     views.message_detail,
+     name='message_detail'
+     ),
     path(
      'message_templates/<int:pk>/edit/',
      views.message_edit,
@@ -90,4 +94,4 @@ urlpatterns = [
           template_name='registration/password_reset_done.html'
           ),
          name='password_reset_done'),
-] 
+]
