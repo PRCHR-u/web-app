@@ -75,12 +75,14 @@
                     <a href="{% url 'mailing_detail' mailing.pk %}" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-eye"></i> Просмотр
                     </a>
+                    {% if request.user.is_staff or mailing.created_by == request.user %}
                     <a href="{% url 'mailing_edit' mailing.pk %}" class="btn btn-outline-warning btn-sm">
                         <i class="bi bi-pencil"></i> Редактировать
                     </a>
                     <a href="{% url 'mailing_delete' mailing.pk %}" class="btn btn-outline-danger btn-sm">
                         <i class="bi bi-trash"></i> Удалить
                     </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

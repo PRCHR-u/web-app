@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Отчеты по рассылкам - Система рассылок{% endblock %}
+{% block page_title %}Отчеты по рассылкам{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>Отчеты по моим рассылкам</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ total_mailings }}</h5>
+                <p class="card-text text-muted">Всего рассылок</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ total_sent_messages }}</h5>
+                <p class="card-text text-muted">Всего отправленных сообщений</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">{{ successful_messages }}</h5>
+                <p class="card-text text-muted">Успешные отправки</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-danger">{{ failed_messages }}</h5>
+                <p class="card-text text-muted">Неуспешные отправки</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% comment %}
+    Add more sections here for detailed reports, charts, etc.
+    You can access the data passed from the view using template variables
+{% endcomment %}
+
+{% endblock %}

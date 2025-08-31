@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 
 {% block title %}Дашборд - Система рассылок{% endblock %}
 {% block page_title %}Дашборд{% endblock %}
@@ -34,7 +34,7 @@
                         </div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_mailings }}</div>
                     </div>
-                    <div class="col-auto">
+                    <div class="col-auto pr-2">
                         <i class="bi bi-play-circle fa-2x text-gray-300"></i>
                     </div>
                 </div>
@@ -50,7 +50,7 @@
                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                             Всего клиентов
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_clients }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ unique_recipients_count }}</div>
                     </div>
                     <div class="col-auto">
                         <i class="bi bi-people fa-2x text-gray-300"></i>
@@ -72,6 +72,42 @@
                     </div>
                     <div class="col-auto">
                         <i class="bi bi-chat-dots fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Успешные отправки
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ successful_messages }}</div>
+                    </div>
+                    <div class="col-auto pr-2">
+                        <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Неуспешные отправки
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ failed_messages }}</div>
+                    </div>
+                    <div class="col-auto pr-2">
+                        <i class="bi bi-x-circle fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>

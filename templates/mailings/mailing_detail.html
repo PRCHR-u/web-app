@@ -10,12 +10,14 @@
     </div>
     <div class="col-md-4 text-end">
         <div class="btn-group" role="group">
+            {% if request.user.is_staff or mailing.created_by == request.user %}
             <a href="{% url 'mailing_edit' mailing.pk %}" class="btn btn-warning">
                 <i class="bi bi-pencil"></i> Редактировать
             </a>
             <a href="{% url 'mailing_delete' mailing.pk %}" class="btn btn-danger">
                 <i class="bi bi-trash"></i> Удалить
             </a>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -92,12 +94,10 @@
             </div>
             <div class="card-body">
                 {% if mailing.status == 'active' %}
-                <form method="post" action="{% url 'mailing_send_now' mailing.pk %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-success w-100 mb-2">
-                        <i class="bi bi-send"></i> Отправить сейчас
-                    </button>
-                </form>
+                <form method="post" action="{% url 'send_mailing' mailing.pk %}">
+ {% csrf_token %}
+ <button type="submit" class="btn btn-success w-100 mb-2"><i class="bi bi-send"></i> Отправить сейчас</button>
+ </form>
                 {% endif %}
                 
                 <a href="{% url 'mailing_edit' mailing.pk %}" class="btn btn-warning w-100 mb-2">
