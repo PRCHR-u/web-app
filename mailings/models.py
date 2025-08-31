@@ -110,6 +110,10 @@ class Mailing(models.Model):
         verbose_name = 'Рассылка'
         verbose_name_plural = 'Рассылки'
         ordering = ['-created_at']
+        permissions = [
+            ("can_view_all_mailings", "Can view all mailings"),
+            ("can_disable_mailings", "Can disable mailings"),
+        ]
 
     def __str__(self):
         return self.title
@@ -225,6 +229,9 @@ class Message(models.Model):
         verbose_name = 'Сообщение (шаблон)'
         verbose_name_plural = 'Сообщения (шаблоны)'
         ordering = ['subject']
+        permissions = [
+            ("can_view_all_messages", "Can view all messages"),
+        ]
 
     def __str__(self):
         return self.subject

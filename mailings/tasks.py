@@ -4,7 +4,7 @@ from django.utils import timezone
 from datetime import timedelta
 import logging
 
-from .models import Mailing, Message, MailingLog
+from .models import Mailing, SentMessage, MailingLog
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ def send_mailing_task(mailing_id):
 
         # Проверяем, что рассылка активна и время подходящее
         now = timezone.now()
-        if (mailing.status != 'active' or now < mailing.start_time or
+        if (mailing.status != 'launched' or now < mailing.start_time or
                 now > mailing.end_time):
             logger.warning(f"Рассылка {mailing_id} не может быть отправлена: "
                            f"статус={mailing.status}, время={now}")
@@ -30,14 +30,14 @@ def send_mailing_task(mailing_id):
         messages_to_send = []
         for client in clients:
             # Проверяем, не было ли уже отправлено сообщение этому клиенту
-            existing_message = Message.objects.filter(
+            existing_message = SentMessage.objects.filter(
                 mailing=mailing,
                 client=client,
                 status='sent'
             ).first()
 
             if not existing_message:
-                message = Message.objects.create(
+                message = SentMessage.objects.create(
                     mailing=mailing,
                     client=client,
                     status='pending'
@@ -54,8 +54,10 @@ def send_mailing_task(mailing_id):
             try:
                 # Отправляем email
                 server_response = send_mail(
-                    subject=mailing.message_template.subject,
-                    message=mailing.message_template.body,
+                    subject=mailing.message.subject,
+                    message=mailing.message.body,
+                    from_email=None,
+                    recipient_list=[message.client.email],
                     fail_silently=False,
                 )
 
@@ -131,9 +133,8 @@ def check_scheduled_mailings():
     """Задача для проверки и запуска запланированных рассылок"""
     now = timezone.now()
 
-    # Находим активные рассылки, которые нужно запустить
     mailings_to_send = Mailing.objects.filter(
-        status='active',
+        status='launched',
         start_time__lte=now,
         end_time__gte=now
     )
@@ -149,14 +150,14 @@ def should_send_mailing_now(mailing, now):
     """Проверяет, нужно ли отправлять рассылку сейчас"""
     if mailing.frequency == 'once':
         # Для однократных рассылок проверяем, была ли уже отправка
-        return not Message.objects.filter(mailing=mailing, status='sent') \
+        return not SentMessage.objects.filter(mailing=mailing, status='sent') \
             .exists()
 
     elif mailing.frequency == 'daily':
         # Для ежедневных рассылок проверяем, была ли отправка сегодня
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         today_end = today_start + timedelta(days=1)
-        return not Message.objects.filter(
+        return not SentMessage.objects.filter(
             mailing=mailing,
             status='sent',
             sent_at__gte=today_start,
@@ -172,7 +173,7 @@ def should_send_mailing_now(mailing, now):
             second=0,
             microsecond=0)
         week_end = week_start + timedelta(days=7)
-        return not Message.objects.filter(
+        return not SentMessage.objects.filter(
             mailing=mailing,
             status='sent',
             sent_at__gte=week_start,
@@ -208,7 +209,7 @@ def should_send_mailing_now(mailing, now):
                 microsecond=0
                 )
 
-        return not Message.objects.filter(
+        return not SentMessage.objects.filter(
             mailing=mailing,
             status='sent',
             sent_at__gte=month_start,

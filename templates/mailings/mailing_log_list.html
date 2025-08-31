@@ -1,0 +1,101 @@
+{% extends 'mailings/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Логи рассылок</h3>
+                    
+                    <div class="card-tools">
+                        <!-- Фильтры и поиск -->
+                        <form method="get" class="form-inline">
+                            <div class="input-group input-group-sm" style="width: 200px;">
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="Поиск..." value="{{ search }}">
+                                <div class="input-group-append">
+                                    <button type="submit" class="btn btn-default">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <select name="status" class="form-control form-control-sm ml-2" 
+                                    onchange="this.form.submit()">
+                                <option value="">Все статусы</option>
+                                {% for value, label in status_choices %}
+                                <option value="{{ value }}" 
+                                        {% if status_filter == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card-body table-responsive p-0">
+                    <table class="table table-hover text-nowrap">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Рассылка</th>
+                                <th>Клиент</th>
+                                <th>Статус</th>
+                                <th>Сообщение</th>
+                                <th>Ответ сервера</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in page_obj %}
+                            <tr>
+                                <td>{{ log.created_at|date:"d.m.Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'mailing_detail' log.mailing.pk %}">
+                                        {{ log.mailing.title }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if log.client %}
+                                    {{ log.client.full_name }}<br>
+                                    <small class="text-muted">{{ log.client.email }}</small>
+                                    {% else %}
+                                    <span class="text-muted">Не указан</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if log.status == 'success' %}bg-success
+                                        {% elif log.status == 'failed' %}bg-danger
+                                        {% else %}bg-warning{% endif %}">
+                                        {{ log.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ log.message|truncatewords:10 }}</small>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ log.server_response|truncatewords:5 }}</small>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">
+                                    Логи не найдены
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card-footer clearfix">
+                    {% include 'mailings/includes/pagination.html' with page_obj=page_obj %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
